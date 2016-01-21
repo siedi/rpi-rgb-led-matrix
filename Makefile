@@ -1,18 +1,26 @@
-CXXFLAGS=-Wall -O3 -g
+CXXFLAGS=-Wall -std=c++0x
 OBJECTS=demo-main.o minimal-example.o text-example.o led-image-viewer.o
 BINARIES=led-matrix minimal-example text-example
 ALL_BINARIES=$(BINARIES) led-image-viewer
 
+PAHO_C_HEADERS ?= /usr/local/include
+PAHO_C_LIB ?= /usr/local/lib
 # Where our library resides. It is split between includes and the binary
 # library in lib
 RGB_INCDIR=include
 RGB_LIBDIR=lib
 RGB_LIBRARY_NAME=rgbmatrix
 RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
-LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
-
+LDFLAGS+=-L$(PAHO_C_LIB) -L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -ljsoncpp -lmqttpp -lpaho-mqtt3a -lrt -lm -lpthread
+CPPFLAGS += -I$(PAHO_C_HEADERS)
+ifdef DEBUG
+  CPPFLAGS += -DDEBUG
+  CXXFLAGS += -g -O0
+else
+  CPPFLAGS += -D_NDEBUG
+  CXXFLAGS += -O3
+endif
 PYTHON_LIB_DIR=python
-
 # Imagemagic flags, only needed if actually compiled.
 MAGICK_CXXFLAGS=`GraphicsMagick++-config --cppflags --cxxflags`
 MAGICK_LDFLAGS=`GraphicsMagick++-config --ldflags --libs`
@@ -21,6 +29,9 @@ all : $(BINARIES)
 
 $(RGB_LIBRARY): FORCE
 	$(MAKE) -C $(RGB_LIBDIR)
+
+led-mqtt : led-mqtt.o $(RGB_LIBRARY)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) led-mqtt.o -o $@ $(LDFLAGS)
 
 led-matrix : demo-main.o $(RGB_LIBRARY)
 	$(CXX) $(CXXFLAGS) demo-main.o -o $@ $(LDFLAGS)

@@ -19,7 +19,7 @@
 
 #include "thread.h"
 #include "canvas.h"
-
+#include <string>
 namespace rgb_matrix {
 //
 // Typically, your programs will crate a canvas and then updating the image
@@ -71,12 +71,15 @@ public:
 
   // Stop the thread at the next possible time Run() checks the running_ flag.
   void Stop() {
-    MutexLock l(&mutex_);
-    running_ = false;
+    if (running_) {
+      MutexLock l(&mutex_);
+      running_ = false;
+    }
   }
 
   // Implement this and run while running() returns true.
   virtual void Run() = 0;
+  virtual void set_option(const std::string key, const std::string value) {};
 
 protected:
   inline Canvas *canvas() { return canvas_; }
