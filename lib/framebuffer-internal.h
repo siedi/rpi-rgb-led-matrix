@@ -16,6 +16,7 @@
 #define RPI_RGBMATRIX_FRAMEBUFFER_INTERNAL_H
 
 #include <stdint.h>
+#include <math.h> 
 
 #include "hardware-mapping.h"
 
@@ -85,6 +86,7 @@ public:
   // This will only affect newly set pixels.
   void SetBrightness(uint8_t b) {
     brightness_ = (b <= 100 ? (b != 0 ? b : 1) : 100);
+    brightness2_ = ceil(brightness_ * 0.82);
   }
   uint8_t brightness() { return brightness_; }
 
@@ -103,7 +105,8 @@ private:
 
   void InitDefaultDesignator(int x, int y, PixelDesignator *designator);
   inline void  MapColors(uint8_t r, uint8_t g, uint8_t b,
-                         uint16_t *red, uint16_t *green, uint16_t *blue);
+                         uint16_t *red, uint16_t *green, uint16_t *blue,
+                         bool lower_brightness = false);
   const int rows_;     // Number of rows. 16 or 32.
   const int parallel_; // Parallel rows of chains. 1 or 2.
   const int height_;   // rows * parallel
@@ -116,6 +119,7 @@ private:
   uint8_t pwm_bits_;   // PWM bits to display.
   bool do_luminance_correct_;
   uint8_t brightness_;
+  uint8_t brightness2_;
 
   const int double_rows_;
   const uint8_t row_mask_;

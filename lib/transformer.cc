@@ -168,8 +168,10 @@ private:
 void UArrangementTransformer::TransformCanvas::SetDelegatee(Canvas* delegatee) {
   delegatee_ = delegatee;
   width_ = (delegatee->width() / 64) * 32;   // Div in middle at 32px boundary
-  height_ = 2 * delegatee->height();
-  if (delegatee->width() % 64 != 0) {
+  height_ = 2 * delegatee->height() - 32; // hack
+  fprintf(stdout, "DWidth: %d DHeight: %d\n", delegatee->width(), delegatee->height());
+  fprintf(stdout, "Width: %d Height: %d\n", width_, height_);
+ /* if (delegatee->width() % 64 != 0) {
     fprintf(stderr, "An U-arrangement would need an even number of panels "
             "unless you can fold one in the middle...\n");
   }
@@ -177,7 +179,7 @@ void UArrangementTransformer::TransformCanvas::SetDelegatee(Canvas* delegatee) {
     fprintf(stderr, "For parallel=%d we would expect the height=%d to be "
             "divisible by %d ??\n", parallel_, delegatee->height(), parallel_);
     assert(false);
-  }
+  }*/
   panel_height_ = delegatee->height() / parallel_;
 }
 
@@ -202,7 +204,11 @@ void UArrangementTransformer::TransformCanvas::SetPixel(
     x = width_ - x - 1;
     y = slab_height - y - 1;
   }
-  delegatee_->SetPixel(x, base_y + y, red, green, blue);
+  if ((x > 63 && x < 96) || (x > 223 && x < 256)) {
+    delegatee_->SetPixel(x, base_y + y, red, blue, green);
+  } else {
+    delegatee_->SetPixel(x, base_y + y, red, green, blue);
+  }
 }
 
 UArrangementTransformer::UArrangementTransformer(int parallel)

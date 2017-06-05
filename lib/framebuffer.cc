@@ -71,7 +71,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     columns_(columns),
     scan_mode_(scan_mode),
     swap_green_blue_(swap_green_blue), inverse_color_(inverse_color),
-    pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
+    pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100), brightness2_(70),
     double_rows_(rows / SUB_PANELS_), row_mask_(double_rows_ - 1),
     shared_mapper_(mapper) {
   assert(hardware_mapping_ != NULL);   // Called InitHardwareMapping() ?
@@ -249,16 +249,18 @@ static inline uint16_t DirectMapColor(uint8_t brightness, uint8_t c) {
 
 inline void Framebuffer::MapColors(
   uint8_t r, uint8_t g, uint8_t b,
-  uint16_t *red, uint16_t *green, uint16_t *blue) {
-
+  uint16_t *red, uint16_t *green, uint16_t *blue, 
+  bool lower_brightness) {
+  
+  uint8_t brightness = lower_brightness ? brightness2_ : brightness_;
   if (do_luminance_correct_) {
-    *red   = CIEMapColor(brightness_, r);
-    *green = CIEMapColor(brightness_, g);
-    *blue  = CIEMapColor(brightness_, b);
+    *red   = CIEMapColor(brightness, r);
+    *green = CIEMapColor(brightness, g);
+    *blue  = CIEMapColor(brightness, b);
   } else {
-    *red   = DirectMapColor(brightness_, r);
-    *green = DirectMapColor(brightness_, g);
-    *blue  = DirectMapColor(brightness_, b);
+    *red   = DirectMapColor(brightness, r);
+    *green = DirectMapColor(brightness, g);
+    *blue  = DirectMapColor(brightness, b);
   }
 
   if (inverse_color_) {
@@ -306,8 +308,10 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   if (pos < 0) return;  // non-used pixel marker.
 
   uint16_t red, green, blue;
-  if (!swap_green_blue_) {
-    MapColors(r, g, b, &red, &green, &blue);
+  //if (!swap_green_blue_) {
+  // HACK to get the small panels fixed
+  if ((x > 63 && x < 96) || (x > 223 && x < 256)) {
+    MapColors(r, g, b, &red, &green, &blue, true);
   } else {
     MapColors(r, g, b, &red, &blue, &green);
   }
